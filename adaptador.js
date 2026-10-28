@@ -3,7 +3,7 @@
 (function () {
   if (window.claude) return;
 
-  const SERVIDOR = window.SERVIDOR_JUEGOS || 'wss://TU-SERVIDOR.onrender.com';
+  const SERVIDOR = window.SERVIDOR_JUEGOS || "wss://pixel-arena-xyk0.onrender.com";
 
   function unirse(nombre) {
     return new Promise((resolver, rechazar) => {
