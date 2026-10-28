@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pixel Arena</title>
+<script>window.SERVIDOR_JUEGOS="wss://TU-SERVIDOR.onrender.com";</script>
+<script src="adaptador.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1c2c; --panel:#262b44; --paper:#f4f4f4; --gold:#ffcd75; --cyan:#73eff7;
+  --orange:#ef7d57; --red:#b13e53; --green:#38b764; --grey:#566c86;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;padding:14px;background:var(--ink);color:var(--paper);min-height:100%;
+  font-family:'VT323',ui-monospace,Menlo,monospace;font-size:22px;
+  background-image:radial-gradient(#2c3352 1px,transparent 1px);background-size:6px 6px;
+  user-select:none;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:99;
+  background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.16) 3px,rgba(0,0,0,0) 4px);
+  box-shadow:inset 0 0 90px rgba(0,0,0,.55);
+}
+main{max-width:720px;margin:0 auto;position:relative;z-index:1}
+h1,h2,.pix{font-family:'Press Start 2P',monospace;font-weight:normal}
+h1{font-size:20px;color:var(--gold);text-shadow:4px 4px 0 var(--red);margin:6px 0 8px;text-align:center;line-height:1.5}
+h2{font-size:11px;color:var(--cyan);margin:0 0 10px}
+.tag{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--cyan);text-align:center;margin:0 0 18px;line-height:1.8}
+.blink{animation:blink 1s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
+.panel{background:var(--panel);padding:14px;margin-bottom:16px;box-shadow:0 0 0 4px var(--ink),0 0 0 8px var(--cyan),8px 8px 0 8px var(--ink)}
+input{width:100%;background:var(--ink);color:var(--paper);border:0;padding:10px 12px;margin-bottom:12px;font-family:'VT323',monospace;font-size:24px;outline:none;box-shadow:inset 0 0 0 3px var(--grey)}
+input:focus{box-shadow:inset 0 0 0 3px var(--gold)}
+.btn{font-family:'Press Start 2P',monospace;font-size:11px;line-height:1.4;cursor:pointer;background:var(--gold);color:var(--ink);border:0;padding:14px 10px;width:100%;box-shadow:inset -4px -4px 0 var(--orange),inset 4px 4px 0 #fff6d3,0 6px 0 var(--ink)}
+.btn:active{transform:translateY(4px);box-shadow:inset -4px -4px 0 var(--orange),inset 4px 4px 0 #fff6d3,0 2px 0 var(--ink)}
+.btn.sec{background:var(--cyan);box-shadow:inset -4px -4px 0 #0097ac,inset 4px 4px 0 #d8ffff,0 6px 0 var(--ink)}
+.btn.red{background:var(--orange);box-shadow:inset -4px -4px 0 var(--red),inset 4px 4px 0 #ffd0b8,0 6px 0 var(--ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:disabled:active{transform:none}
+.sw-row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px;justify-content:center}
+.sw{width:30px;height:30px;border:0;cursor:pointer;box-shadow:0 0 0 3px var(--ink),0 0 0 5px var(--paper)}
+.sw.on{box-shadow:0 0 0 3px var(--ink),0 0 0 6px var(--gold)}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.hud b{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);font-weight:normal}
+.live{color:var(--green)}
+.scores{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.scores span{background:var(--ink);padding:3px 8px;box-shadow:0 0 0 2px var(--grey);color:var(--gold)}
+canvas{display:block;width:100%;height:auto;image-rendering:pixelated;background:var(--ink);box-shadow:0 0 0 3px var(--ink),0 0 0 6px var(--grey)}
+.msgbar{font-family:'Press Start 2P',monospace;font-size:9px;line-height:1.8;color:var(--ink);background:var(--cyan);padding:8px 10px;margin:10px 0 0;min-height:36px}
+.controles{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;margin-top:12px}
+.dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:4px}
+.dpad button{background:var(--grey);color:var(--paper);border:0;font-size:18px;box-shadow:inset -3px -3px 0 #3b4a63,inset 3px 3px 0 #8fa3bf}
+.dpad button:nth-child(1){grid-column:2;grid-row:1}
+.dpad button:nth-child(2){grid-column:1;grid-row:2}
+.dpad button:nth-child(3){grid-column:3;grid-row:2}
+.dpad button:nth-child(4){grid-column:2;grid-row:3}
+.fuego{font-family:'Press Start 2P',monospace;font-size:12px;width:96px;height:96px;border-radius:50%;background:var(--red);color:var(--paper);border:0;box-shadow:inset -6px -6px 0 #7a2538,inset 6px 6px 0 #ff8fa0,0 6px 0 var(--ink);cursor:pointer}
+.fuego:active{transform:translateY(4px)}
+.leyenda{font-size:20px;color:var(--grey);text-align:center}
+#chat{height:200px;overflow-y:auto;background:var(--ink);padding:10px;margin-bottom:10px;box-shadow:inset 0 0 0 3px var(--grey);font-size:22px}
+#chat p{margin:2px 0;word-break:break-word}
+#chat .sys{color:var(--green)}
+#chat .me{color:var(--cyan)}
+.chatin{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:stretch}
+.chatin input{margin:0}
+.chatin .btn{width:auto;padding:0 16px}
+.error{color:var(--orange);font-size:22px;margin:10px 0 0;min-height:1em}
+[hidden]{display:none!important}
+@media (max-width:480px){.controles{grid-template-columns:1fr auto}.leyenda{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<main>
+  <h1>PIXEL ARENA</h1>
+  <p class="tag">— COMBATE EN LÍNEA · 2 A 8 JUGADORES —</p>
+
+  <section id="login" class="panel">
+    <h2>ENTRAR A LA ARENA</h2>
+    <input id="nombre" placeholder="TU NOMBRE" maxlength="12" autocomplete="off">
+    <input id="sala" placeholder="CÓDIGO DE SALA" maxlength="30" autocomplete="off">
+    <p class="tag" style="margin:6px 0 8px;text-align:left">ELIGE TU COLOR</p>
+    <div class="sw-row" id="paleta"></div>
+    <button class="btn" id="entrar">ENTRAR</button>
+    <p id="errLogin" class="error"></p>
+    <p class="tag blink" style="margin:18px 0 0">PRESS START</p>
+  </section>
+
+  <section id="juego" hidden>
+    <div class="panel">
+      <div class="hud">
+        <b id="titulo"></b>
+        <span id="conect" class="live"></span>
+      </div>
+      <div class="hud">
+        <b id="tiempo">--</b>
+        <button class="btn sec" id="siguiente" style="width:auto;padding:10px 14px;font-size:9px">EMPEZAR RONDA</button>
+      </div>
+      <div class="scores" id="marcador"></div>
+
+      <canvas id="cv" width="512" height="320"></canvas>
+
+      <div class="controles">
+        <div class="dpad">
+          <button data-d="u">▲</button><button data-d="l">◀</button><button data-d="r">▶</button><button data-d="d">▼</button>
+        </div>
+        <p class="leyenda">Flechas o WASD para moverte.<br>Espacio o FUEGO para disparar.</p>
+        <button class="fuego" id="fuego">FUEGO</button>
+      </div>
+
+      <p id="msg" class="msgbar"></p>
+    </div>
+
+    <div class="panel">
+      <h2>CHAT</h2>
+      <div id="chat"></div>
+      <div class="chatin">
+        <input id="txt" placeholder="ESCRIBE..." maxlength="200" autocomplete="off">
+        <button class="btn" id="enviar">OK</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const TW = 16, MW = 32, MH = 20, ROUND_MS = 90000;
+const SPAWN = [[2,2],[29,2],[2,17],[29,17]];
+const COLORES = ['#e84393','#73eff7','#ffcd75','#38b764','#ef7d57','#b13e53','#5d9cff','#c77dff'];
+const POWER = { E: { nombre: 'ESCUDO', col: '#73eff7' }, V: { nombre: 'VELOCIDAD', col: '#38b764' }, T: { nombre: 'TRIPLE', col: '#ffcd75' } };
+const TIPOS = ['E','V','T'];
+// Personaje 8x8: K contorno, S piel, E ojos, C color del jugador
+const SPR = [
+  "..KKKK..",
+  ".KSSSSK.",
+  ".KSEESK.",
+  ".KSSSSK.",
+  "KKCCCCKK",
+  "KCCCCCCK",
+  "KCCCCCCK",
+  "KK....KK"
+];
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+let room = null, nombre = '', miColor = COLORES[0], synced = false;
+let R = 0, SEED = 0, inicio = 0, over = true, MAPA = null;
+let taken = new Set(), pidSent = new Set(), muertos = new Set(), finSent = false;
+let scores = {}, bullets = [], lastShot = 0, lastPres = 0, lastT = performance.now();
+let me = { x: 0, y: 0, hp: 3, alive: false, shield: false, vel: 0, triple: 0, fx: 1, fy: 0 };
+let keys = {}, pad = { u: false, d: false, l: false, r: false, f: false };
+
+const cv = $('cv'), ctx = cv.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+function rng(a){
+  return () => {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function hash(s){ let h = 5381; for (const c of s) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return h >>> 0; }
+
+function cercaSpawn(x, y){ return SPAWN.some(([sx, sy]) => Math.abs(sx - x) <= 2 && Math.abs(sy - y) <= 2); }
+
+// El mapa sale de la semilla, así que todos ven el mismo
+function genMapa(seed){
+  const r = rng(seed), g = [];
+  for (let y = 0; y < MH; y++){
+    g.push([]);
+    for (let x = 0; x < MW; x++) g[y].push(x === 0 || y === 0 || x === MW - 1 || y === MH - 1 ? 1 : 0);
+  }
+  for (let i = 0; i < 70; i++){
+    const bx = 2 + Math.floor(r() * (MW - 5)), by = 2 + Math.floor(r() * (MH - 5));
+    if (cercaSpawn(bx, by)) continue;
+    g[by][bx] = g[by][bx + 1] = g[by + 1][bx] = g[by + 1][bx + 1] = 1;
+  }
+  const pu = [];
+  while (pu.length < 6){
+    const x = 1 + Math.floor(r() * (MW - 2)), y = 1 + Math.floor(r() * (MH - 2));
+    if (g[y][x] || cercaSpawn(x, y) || pu.some(p => p.x === x && p.y === y)) continue;
+    pu.push({ x, y, k: TIPOS[Math.floor(r() * TIPOS.length)] });
+  }
+  return { g, pu };
+}
+
+function muroEn(tx, ty){ return ty < 0 || tx < 0 || ty >= MH || tx >= MW || MAPA.g[ty][tx] === 1; }
+function bloqueado(x, y){
+  const r = 0.3;
+  return [[x-r,y-r],[x+r,y-r],[x-r,y+r],[x+r,y+r]].some(([px,py]) => muroEn(Math.floor(px), Math.floor(py)));
+}
+
+function msg(t){ $('msg').textContent = t; }
+function chatLinea(texto, clase){
+  const p = document.createElement('p'); if (clase) p.className = clase;
+  p.textContent = texto; const c = $('chat'); c.appendChild(p); c.scrollTop = c.scrollHeight;
+}
+function contar(){
+  if (!room) return; let n = 0; try { n = room.peers().length; } catch (e) {}
+  $('conect').textContent = '● ' + n + ' ONLINE';
+}
+function marcador(){
+  const m = $('marcador'); m.innerHTML = '';
+  Object.entries(scores).sort((a, b) => b[1] - a[1]).forEach(([n, p]) => {
+    const s = document.createElement('span'); s.textContent = n + ' ' + p; m.appendChild(s);
+  });
+}
+
+// Jugadores que están en la ronda actual y siguen vivos
+function enRonda(){
+  return room ? room.peers().filter(p => p.presence && p.presence.n && p.presence.r === R) : [];
+}
+function vivosNombres(){
+  return enRonda().map(p => p.presence.n).filter(n => !muertos.has(n) && enRonda().find(p => p.presence.n === n && p.presence.alive));
+}
+
+function comprobarFin(){
+  if (over || !MAPA || finSent) return;
+  const ronda = enRonda(), vivos = vivosNombres();
+  if (ronda.length >= 2 && vivos.length <= 1){
+    finSent = true;
+    room.emit('ronda_fin', { r: R, w: vivos[0] || null });
+  }
+}
+
+function spawnear(){
+  const s = SPAWN[hash(nombre) % SPAWN.length];
+  me.x = s[0] + 0.5; me.y = s[1] + 0.5;
+  me.hp = 3; me.alive = true; me.shield = false; me.vel = 0; me.triple = 0; me.fx = 1; me.fy = 0;
+}
+
+function presenceNow(){
+  room.presence({
+    n: nombre, c: miColor, r: R, alive: me.alive, hp: me.hp,
+    x: +me.x.toFixed(2), y: +me.y.toFixed(2), s: me.shield ? 1 : 0,
+    fx: +me.fx.toFixed(2), fy: +me.fy.toFixed(2)
+  });
+}
+
+function disparar(){
+  if (!me.alive || over || !room) return;
+  const ahora = performance.now();
+  if (ahora - lastShot < 280) return;
+  lastShot = ahora;
+  const base = Math.atan2(me.fy || 0, me.fx || 1);
+  const angulos = me.triple > 0 ? [-0.22, 0, 0.22] : [0];
+  if (me.triple > 0) me.triple--;
+  const sx = me.x + Math.cos(base) * 0.6, sy = me.y + Math.sin(base) * 0.6;
+  const lista = angulos.map(a => {
+    const dx = Math.cos(base + a) * 9, dy = Math.sin(base + a) * 9;
+    bullets.push({ x: sx, y: sy, dx, dy, o: nombre, t: 1.4 });
+    return [+sx.toFixed(2), +sy.toFixed(2), +dx.toFixed(2), +dy.toFixed(2)];
+  });
+  room.emit('disparo', { o: nombre, b: lista });
+}
+
+function golpe(por){
+  if (me.shield){ me.shield = false; chatLinea('¡ESCUDO ROTO!', 'sys'); return; }
+  me.hp--;
+  if (me.hp <= 0){
+    me.alive = false;
+    room.emit('muerte', { v: nombre, by: por });
+    chatLinea('Te eliminó ' + por + '.', 'sys');
+    comprobarFin();
+  }
+}
+
+function actualizar(dt){
+  if (me.alive && !over){
+    const izq = keys.ArrowLeft || keys.KeyA || pad.l, der = keys.ArrowRight || keys.KeyD || pad.r;
+    const arr = keys.ArrowUp || keys.KeyW || pad.u, aba = keys.ArrowDown || keys.KeyS || pad.d;
+    let vx = (der ? 1 : 0) - (izq ? 1 : 0), vy = (aba ? 1 : 0) - (arr ? 1 : 0);
+    const L = Math.hypot(vx, vy);
+    if (L > 0){ vx /= L; vy /= L; me.fx = vx; me.fy = vy; }
+    const v = 3.2 * (me.vel > 0 ? 1.6 : 1) * dt;
+    if (me.vel > 0) me.vel -= dt;
+    const nx = me.x + vx * v; if (!bloqueado(nx, me.y)) me.x = nx;
+    const ny = me.y + vy * v; if (!bloqueado(me.x, ny)) me.y = ny;
+    if (pad.f || keys.Space) disparar();
+    MAPA.pu.forEach((p, i) => {
+      if (!taken.has(i) && !pidSent.has(i) && Math.hypot(p.x + 0.5 - me.x, p.y + 0.5 - me.y) < 0.75){
+        pidSent.add(i); room.emit('pick', { i, n: nombre });
+      }
+    });
+  }
+  bullets = bullets.filter(b => {
+    b.t -= dt; b.x += b.dx * dt; b.y += b.dy * dt;
+    if (b.t <= 0 || muroEn(Math.floor(b.x), Math.floor(b.y))) return false;
+    if (me.alive && !over && b.o !== nombre && Math.hypot(b.x - me.x, b.y - me.y) < 0.45){ golpe(b.o); return false; }
+    return true;
+  });
+  if (!over && !finSent && Date.now() - inicio > ROUND_MS){
+    finSent = true; room.emit('ronda_fin', { r: R, w: vivosNombres()[0] || null });
+  }
+  const ahora = performance.now();
+  if (room && ahora - lastPres > 90){ lastPres = ahora; presenceNow(); }
+}
+
+function dibujarSprite(x, y, color, alpha){
+  ctx.globalAlpha = alpha;
+  for (let r = 0; r < SPR.length; r++) for (let c = 0; c < SPR[r].length; c++){
+    const ch = SPR[r][c]; if (ch === '.') continue;
+    ctx.fillStyle = ch === 'K' ? '#1a1c2c' : ch === 'S' ? '#ffd9b3' : ch === 'E' ? '#1a1c2c' : color;
+    ctx.fillRect(x + c * 2, y + r * 2, 2, 2);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function dibujar(){
+  ctx.fillStyle = '#1a1c2c'; ctx.fillRect(0, 0, cv.width, cv.height);
+  if (!MAPA) return;
+  for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++){
+    if (MAPA.g[y][x]){
+      ctx.fillStyle = '#566c86'; ctx.fillRect(x * TW, y * TW, TW, TW);
+      ctx.fillStyle = '#3b4a63';
+      ctx.fillRect(x * TW, y * TW + 7, TW, 1); ctx.fillRect(x * TW + 7, y * TW, 1, 7);
+      ctx.fillRect(x * TW + 3, y * TW + 8, 1, 8);
+    } else {
+      ctx.fillStyle = (x + y) % 2 ? '#262b44' : '#2c3352';
+      ctx.fillRect(x * TW, y * TW, TW, TW);
+    }
+  }
+  MAPA.pu.forEach((p, i) => {
+    if (taken.has(i)) return;
+    const cx = p.x * TW + 8, cy = p.y * TW + 8, pw = POWER[p.k];
+    ctx.fillStyle = pw.col;
+    ctx.fillRect(cx - 1, cy - 6, 2, 12); ctx.fillRect(cx - 6, cy - 1, 12, 2);
+    ctx.fillRect(cx - 4, cy - 4, 8, 8);
+    ctx.fillStyle = '#1a1c2c'; ctx.fillRect(cx - 2, cy - 2, 4, 4);
+  });
+  if (room){
+    enRonda().forEach(p => {
+      const pr = p.presence;
+      const x = p.isMe && p.sameTab ? me.x : Number(pr.x) || 0;
+      const y = p.isMe && p.sameTab ? me.y : Number(pr.y) || 0;
+      const vivo = p.isMe && p.sameTab ? me.alive : !!pr.alive;
+      const hp = p.isMe && p.sameTab ? me.hp : (pr.hp || 0);
+      const px = x * TW - 8, py = y * TW - 8;
+      dibujarSprite(px, py, pr.c || '#ffffff', vivo ? 1 : 0.25);
+      if (vivo){
+        for (let h = 0; h < hp; h++){ ctx.fillStyle = '#b13e53'; ctx.fillRect(x * TW - 8 + h * 5, py - 6, 4, 3); }
+        if (pr.s){ ctx.strokeStyle = '#73eff7'; ctx.lineWidth = 1; ctx.strokeRect(px - 2, py - 2, 20, 20); }
+      }
+      ctx.fillStyle = '#f4f4f4'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+      ctx.fillText((pr.n || '') + (p.isMe && p.sameTab ? '*' : ''), x * TW, py - 9);
+    });
+  }
+  ctx.fillStyle = '#ffcd75';
+  bullets.forEach(b => ctx.fillRect(Math.round(b.x * TW) - 1, Math.round(b.y * TW) - 1, 3, 3));
+}
+
+function actualizarHUD(){
+  if (!over && MAPA){
+    const t = Math.max(0, Math.ceil((ROUND_MS - (Date.now() - inicio)) / 1000));
+    $('tiempo').textContent = 'T ' + t + 's';
+  } else {
+    $('tiempo').textContent = R ? 'FIN' : 'ESPERA';
+  }
+  $('siguiente').disabled = !over && R !== 0;
+  if (!R) msg('NADIE HA EMPEZADO AÚN. PULSA "EMPEZAR RONDA".');
+  else if (!over && !me.alive) msg('ELIMINADO. ESPERA A LA SIGUIENTE RONDA.');
+  else if (!over && !enRonda().some(p => p.isMe && p.sameTab)) msg('RONDA EN CURSO. ENTRA EN LA SIGUIENTE.');
+  else if (!over) msg('¡SOBREVIVE! RECOGE POWER-UPS Y ELIMINA A LOS DEMÁS.');
+  else msg('RONDA TERMINADA. PULSA "EMPEZAR RONDA".');
+}
+
+function aplicar(topic, d, m){
+  if (!d && topic !== 'hola') return;
+  if (topic === 'ronda'){
+    if (d.r <= R) return;
+    R = d.r; SEED = d.seed; MAPA = genMapa(SEED); over = false; finSent = false;
+    inicio = Date.now(); taken = new Set(); pidSent = new Set(); muertos = new Set(); bullets = [];
+    spawnear(); presenceNow(); chatLinea('— RONDA ' + R % 1000 + ' —', 'sys');
+  }
+  else if (topic === 'disparo'){
+    if (m.sameTab) return;
+    d.b.forEach(([x, y, dx, dy]) => bullets.push({ x, y, dx, dy, o: d.o, t: 1.4 }));
+  }
+  else if (topic === 'muerte'){
+    muertos.add(d.v);
+    if (d.by && d.by !== d.v) scores[d.by] = (scores[d.by] || 0) + 1;
+    marcador(); comprobarFin();
+  }
+  else if (topic === 'pick'){
+    if (taken.has(d.i)) return;
+    taken.add(d.i);
+    if (m.sameTab){
+      const k = MAPA.pu[d.i].k;
+      if (k === 'E') me.shield = true;
+      if (k === 'V') me.vel = 6;
+      if (k === 'T') me.triple = 3;
+      chatLinea('¡Recogiste ' + POWER[k].nombre + '!', 'sys');
+    }
+  }
+  else if (topic === 'ronda_fin'){
+    if (d.r !== R || over) return;
+    over = true;
+    if (d.w){ scores[d.w] = (scores[d.w] || 0) + 1; chatLinea('🏆 ' + d.w + ' gana la ronda.', 'sys'); }
+    else chatLinea('Ronda sin ganador.', 'sys');
+    marcador();
+  }
+  else if (topic === 'chat'){
+    if (!m.sameTab) chatLinea((d.n || 'JUGADOR') + ': ' + String(d.t || '').slice(0, 200), '');
+  }
+  else if (topic === 'hola'){
+    if (!m.sameTab) room.emit('estado', { r: R, seed: SEED, inicio, over, scores });
+  }
+  else if (topic === 'estado'){
+    if (synced || !d || !d.r) return;
+    synced = true;
+    R = d.r; SEED = d.seed; MAPA = genMapa(SEED); inicio = d.inicio; over = d.over;
+    scores = d.scores || {}; marcador();
+  }
+}
+
+const TEMAS = ['ronda','disparo','muerte','pick','ronda_fin','chat','hola','estado'];
+
+function bucle(t){
+  const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
+  if (room) actualizar(dt);
+  dibujar(); actualizarHUD();
+  requestAnimationFrame(bucle);
+}
+
+// Lobby
+COLORES.forEach(col => {
+  const b = document.createElement('button');
+  b.className = 'sw'; b.style.background = col; b.dataset.c = col;
+  if (col === miColor) b.classList.add('on');
+  b.onclick = () => { miColor = col; document.querySelectorAll('.sw').forEach(s => s.classList.toggle('on', s.dataset.c === col)); };
+  $('paleta').appendChild(b);
+});
+
+$('entrar').onclick = async () => {
+  nombre = $('nombre').value.trim().slice(0, 12).toUpperCase();
+  const raw = $('sala').value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+  if (!nombre || !raw){ $('errLogin').textContent = 'ESCRIBE NOMBRE Y CÓDIGO DE SALA.'; return; }
+  $('entrar').disabled = true; $('errLogin').textContent = 'CONECTANDO...';
+  try {
+    const api = window.claude ? await window.claude.use('room') : null;
+    if (!api){ $('errLogin').textContent = 'ESTA PÁGINA NO PUEDE CONECTARSE EN TIEMPO REAL.'; $('entrar').disabled = false; return; }
+    room = await api.join('arena-' + raw);
+  } catch (e) {
+    $('errLogin').textContent = 'NO SE PUDO ENTRAR. INTÉNTALO DE NUEVO.'; $('entrar').disabled = false; return;
+  }
+  TEMAS.forEach(t => room.on(t, mi => aplicar(t, mi.data, mi)));
+  room.onPeers(() => { contar(); });
+  $('login').hidden = true; $('juego').hidden = false;
+  $('titulo').textContent = 'ARENA · ' + raw.toUpperCase();
+  presenceNow(); marcador(); contar();
+  room.emit('hola', {});
+  chatLinea('BIENVENIDO, ' + nombre + '.', 'sys');
+  setTimeout(() => { synced = true; }, 1500);
+  requestAnimationFrame(bucle);
+};
+
+// Controles
+document.addEventListener('keydown', e => {
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  keys[e.code] = true;
+});
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+document.querySelectorAll('.dpad button').forEach(b => {
+  const k = b.dataset.d;
+  const on = () => { pad[k] = true; }, off = () => { pad[k] = false; };
+  b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off);
+  b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);
+});
+const fuego = $('fuego');
+fuego.addEventListener('pointerdown', () => { pad.f = true; disparar(); });
+fuego.addEventListener('pointerup', () => { pad.f = false; });
+fuego.addEventListener('pointerleave', () => { pad.f = false; });
+
+$('siguiente').onclick = () => {
+  if (!room || (!over && R !== 0)) return;
+  room.emit('ronda', { r: Math.max(R + 1, Date.now()), seed: Math.floor(Math.random() * 2147483647) });
+};
+
+function enviar(){
+  const t = $('txt').value.trim().slice(0, 200);
+  if (!t || !room) return;
+  room.emit('chat', { n: nombre, t }); chatLinea(nombre + ': ' + t, 'me'); $('txt').value = '';
+}
+$('enviar').onclick = enviar;
+$('txt').addEventListener('keydown', e => { if (e.key === 'Enter') enviar(); });
+</script>
+</body>
+</html>
