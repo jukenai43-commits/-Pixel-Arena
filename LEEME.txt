@@ -1,0 +1,10 @@
+PIXEL ARENA - ARCHIVOS ORGANIZADOS PARA PUBLICAR
+
+Archivos en la raíz:
+- server.js y package.json: servidor para Render.
+- index.html y adaptador.js: página para Netlify.
+
+Primero sube los cuatro archivos a un repositorio de GitHub.
+En Render configura Root Directory vacío (raíz), Build Command: npm install y Start Command: npm start.
+Cuando Render dé la URL https://NOMBRE.onrender.com, reemplaza TU-SERVIDOR.onrender.com en index.html y adaptador.js por el dominio real de Render, usando wss:// en ambos archivos, y guarda los cambios en GitHub.
+Luego en Netlify importa el mismo repositorio y publica desde la raíz (Publish directory: .; sin comando de build).
